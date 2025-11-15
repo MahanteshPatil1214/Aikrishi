@@ -265,12 +265,12 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import TranslatorText from './TranslatorText'; 
-// 🚨 Ensure this path is correct for your Language Context
 import { useLanguage } from "../context/LanguageContext"; 
 
 // Gemini Setup (Primary Chat)
 const API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const GEMINI_MODEL = "gemini-2.5-flash"; 
+const MAX_INPUT_CHARS = 500; 
 
 // Framer Variants for Message Animation
 const messageVariants = {
@@ -299,8 +299,8 @@ export default function ChatBot() {
   const [messages, setMessages] = useState([
     {
       sender: "bot",
-      text: `👋 Namaste! I'm Krishi Astra AI. Main aapki kya madad kar sakta hoon? Aap mujhse pooch sakte hain 
-Toh bataiye, aaj aapko kis vishay par jaankari chahiye?`,
+      // 🚨 INITIAL MESSAGE FIX: Simple welcome, the detailed list is triggered by the API on first user message.
+      text: `👋 Namaste! I'm Krishi Astra AI. Please ask me about crops, weather, or market prices.`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -317,7 +317,11 @@ Toh bataiye, aaj aapko kis vishay par jaankari chahiye?`,
   }, [isOpen]);
   
   // Helper to strip Markdown for TTS (Fixes TTS reading "*")
-  const stripMarkdown = (text) => text.replace(/\*\*|__|#|\*/g, ''); 
+  // Ensure we strip *all* common markdown symbols
+  const stripMarkdown = (text) => {
+    if (!text) return "";
+    return text.replace(/\*\*|__|#|\*|--/g, '').trim(); 
+  }
 
   // --- TTS/Speech Fix: Select Voice based on context language ---
   const speakMessage = (text) => {
@@ -351,7 +355,7 @@ Toh bataiye, aaj aapko kis vishay par jaankari chahiye?`,
     speechSynthesis.speak(utterance);
   };
 
-  // --- Voice Input (STT) with Error Fixes ---
+  // --- Voice Input (STT) (Unchanged) ---
   const handleVoiceInput = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -415,17 +419,27 @@ Toh bataiye, aaj aapko kis vishay par jaankari chahiye?`,
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Limit history sent to the API
     const historyLimit = 6; 
     const messagesToUse = messages.slice(-historyLimit);
     
-    // 🚨 Gemini Fix: Updated System Prompt to prevent asterisks and request target language
-    const systemInstruction = 
-        `You are Krishi Astra AI assistant helping Indian farmers with information about crops, weather, markets, and modern techniques. 
-        Your tone should be helpful, respectful, and use a mix of Hindi and English terms common in farming (Hinglish). 
-        The user has selected a language preference (code: ${language}). Please provide the response primarily in that language (e.g., Kannada if 'kn'). 
-        
-        DO NOT USE ASTERISKS (*) OR DOUBLE UNDERSCORES (__) FOR FORMATTING. Use plain text only.`; // Explicitly avoid markdown symbols
+    // 🚨 UPDATED SYSTEM INSTRUCTION: Tells AI to provide the service list on the first user message.
+    const serviceList = `
+1. Faslon ki Jaankari (Crop Info)
+2. Mausam ki Jaankari (Weather)
+3. Mandi Bhav (Market Prices)
+4. Aadhunik Kheti (Modern Techniques)
+5. Sarkari Yojanaen (Government Schemes)
+6. Samanya Salah (General Advice)
+`;
+    let systemInstruction = 
+        `You are Krishi Astra AI assistant helping Indian farmers. Your tone should be helpful, respectful, and use a mix of Hindi and English. 
+        The user has selected a language preference (code: ${language}). Please provide the response primarily in that language. 
+        DO NOT USE ASTERISKS (*) OR DOUBLE UNDERSCORES (__) FOR FORMATTING. Use plain text only.`;
+
+    // 🚨 Logic to include the service list prompt only once (on the first user message)
+    if (messages.length === 1 && messages[0].sender === 'bot') {
+        systemInstruction += ` Your very first response must introduce the services you offer. Use the following list as a base: \n\n${serviceList}\n\nAsk the user, 'Aapko kis vishay par jaankari chahiye?' (What topic do you want information on?)`;
+    }
 
 
     try {
@@ -589,6 +603,7 @@ Toh bataiye, aaj aapko kis vishay par jaankari chahiye?`,
                 className="flex-1 border border-green-400 rounded-full px-4 py-2 text-sm bg-white focus:border-green-600 focus:ring-2 focus:ring-green-300 transition-all duration-200 outline-none"
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                 disabled={isListening} 
+                maxLength={MAX_INPUT_CHARS} 
               />
               <motion.button
                 onClick={sendMessage}
