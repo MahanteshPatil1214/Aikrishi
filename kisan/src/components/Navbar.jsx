@@ -214,8 +214,6 @@ export default function Navbar() {
     { to: "/", label: "Home" },
     { to: "/market", label: "Market" },
     { to: "/ai-diary", label: "AI Diary" },
-    { to: "/features", label: "Features" },
-    { to: "/community", label: "Community" },
   ];
 
   const LinkItem = ({ to, label, className }) => (

@@ -1190,6 +1190,12 @@ export default function Home() {
       icon: "🌾",
       link: "/crop-prediction",
     },
+{
+      title: "Ai news",
+      desc: "Get AI-based crop suggestions based on soil nutrients, temperature, rainfall, and pH.",
+      icon: "🌾",
+      link: "/ai_news",
+    },
     {
       title: "Fertilizer Recommendation",
       desc: "Get AI-based fertilizer suggestions based on soil nutrients and crop type.",

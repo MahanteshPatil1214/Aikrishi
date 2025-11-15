@@ -8,6 +8,8 @@ import CropPrediction from "../pages/CropPrediction";
 import FertilizerRecommendation from "../pages/FertilizerRecommendation";
 import WarehouseFinder from "../pages/WarehouseFinder";
 import Weather from "../pages/Weather";
+import AiNews from "../pages/AiNews.jsx";
+
 
 export default function AppRouter() {
   return (
@@ -22,6 +24,7 @@ export default function AppRouter() {
         <Route path="/fertilizer" element={<FertilizerRecommendation />} />
         <Route path="/warehouse" element={<WarehouseFinder />} />
         <Route path="/weather" element={<Weather />} />
+        <Route path="/ai_news" element={<AiNews />}/>
       </Routes>
     </Router>
   );
